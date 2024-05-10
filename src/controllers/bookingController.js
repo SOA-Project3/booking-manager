@@ -20,18 +20,22 @@ const getAllScheduleLots = () => {
     });
 };
 
-const userSchedulesLots =  (jsonString) => {
-    const query = JSON.parse(jsonString);
-    const userId = Object.values(query)[0]
-    // Execute a SELECT query
-    new sql.Request().query(`SELECT * FROM ScheduleSlots WHERE UserId = ${userId}`, (err, result) => {
-        if (err) {
-            console.error("Error executing query:", err);
-        } else {
-            return result.recordset; 
-        }
+const userSchedulesLots = (jsonString) => {
+    return new Promise((resolve, reject) => {
+        const query = JSON.parse(jsonString);
+        const userId = Object.values(query)[0];
+        
+        // Execute a SELECT query
+        new sql.Request().query(`SELECT * FROM ScheduleSlots WHERE UserId = ${userId}`, (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                reject(err);
+            } else {
+                resolve(result.recordset);
+            }
+        });
     });
-};  
+};
 
 /*
 router.put("/bookscheduleslot", (req, res) => {
