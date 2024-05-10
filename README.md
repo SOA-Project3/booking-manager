@@ -1,1 +1,1 @@
-# booking-manager2
+# authentication-service
