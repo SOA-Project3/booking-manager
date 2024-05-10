@@ -52,8 +52,24 @@ const handleMessage_userSchedulesLots = async (message) => {
       console.error('Error processing message:', error);
     }
 };
+
+const handleMessage_allScheduleSlots = async (message) => {
+  try {
+    // Get recommendation response from recommendation service
+    const allScheduleSlots_response = await bookingController.allScheduleSlots();
+    // Publish the recommendation response
+    await publishMessage("recommendation-service", allScheduleSlots_response);
+
+    // Acknowledge the message to remove it from the subscription
+    message.ack();
+  } catch (error) {
+    console.error('Error processing message:', error);
+  }
+};
+
   
 module.exports = {
-  handleMessage_availableScheduleSlots,
-    handleMessage_userSchedulesLots
+    handleMessage_availableScheduleSlots,
+    handleMessage_userSchedulesLots,
+    handleMessage_allScheduleSlots
 }

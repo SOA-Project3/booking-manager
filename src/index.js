@@ -32,14 +32,17 @@ sql.connect(config, err => {
 // Set up a subscription to listen for messages
 const availableScheduleSlots_sub_name = 'booking-backend-getAllScheduleLots';
 const userSchedulesLots_sub_name = 'booking-backend-userSchedulesLots';
+const allScheduleSlots_sub_name = 'booking-backend-allScheduleSlots';
 
 
 const availableScheduleSlots_sub = pubsub.subscription(availableScheduleSlots_sub_name);
 const userSchedulesLots_sub = pubsub.subscription(userSchedulesLots_sub_name);
+const allScheduleSlots_sub = pubsub.subscription(allScheduleSlots_sub_name);
 
 // Start listening for messages
 availableScheduleSlots_sub.on('message', pubsubHelper.handleMessage_availableScheduleSlots);
 userSchedulesLots_sub.on('message', pubsubHelper.handleMessage_userSchedulesLots);
+allScheduleSlots_sub.on('message', pubsubHelper.handleMessage_allScheduleSlots);
 
 module.exports = {
     app

@@ -5,6 +5,22 @@ const sql = require("mssql");
 const router = express.Router();
 router.use(bodyParser.json());
 
+const allScheduleSlots = () => {
+    return new Promise((resolve, reject) => {
+        // Execute a SELECT query
+        const request = new sql.Request();
+        request.query("SELECT * FROM ScheduleSlots", (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                reject(err);
+            } else {
+                const jsonString = JSON.stringify(result.recordset);
+                resolve(jsonString); // Resolve the Promise with the JSON string
+            }
+        });
+    });
+};
+
 const availableScheduleSlots = () => {
     return new Promise((resolve, reject) => {
         // Execute a SELECT query
@@ -15,6 +31,21 @@ const availableScheduleSlots = () => {
             } else {
                 const jsonString = JSON.stringify(result.recordset);
                 resolve(jsonString); // Resolve the Promise with the JSON string
+            }
+        });
+    });
+};
+
+const bookedScheduleSlots = () => {
+    return new Promise((resolve, reject) => {
+        // Execute a SELECT query
+        const request = new sql.Request();
+        request.query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'Yes'", (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                reject(err);
+            } else {
+                resolve(result.recordset);
             }
         });
     });
@@ -39,78 +70,105 @@ const userSchedulesLots = (jsonString) => {
     });
 };
 
-/*
-router.put("/bookscheduleslot", (req, res) => {
-    const { userId, scheduleSlotId, peopleQuantity } = req.query;
-
-    // Execute an UPDATE query
-    new sql.Request().query(`UPDATE ScheduleSlots SET UserId = ${userId}, IsBooked = 'Yes', PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
-        if (err) {
-            console.error("Error executing query:", err);
-            res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "An error occurred while updating schedule slot." });
-        } else {
-            res.status(statusCodes.OK).json({ message: "Schedule slot updated successfully." });
-        }
+const bookScheduleSlot = (jsonString) => {
+    const { userId, scheduleSlotId, peopleQuantity } = JSON.parse(jsonString);
+    return new Promise((resolve, reject) => {
+        // Execute an UPDATE query
+        const request = new sql.Request();
+        request.query(`UPDATE ScheduleSlots SET UserId = ${userId}, IsBooked = 'Yes', PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                const response = JSON.stringify({ error: "An error occurred while updating reservation." });
+                reject(response);
+            } else {
+                const response = JSON.stringify({ message: "Reservation updated successfully." });
+                resolve(response);
+            }
+        });
     });
-});
+};
 
-router.put("/cancelscheduleslot", (req, res) => {
-    const { scheduleSlotId } = req.query;
+const cancelScheduleSlot = (jsonString) => {
+    const { scheduleSlotId } = JSON.parse(jsonString);
 
-    // Execute an UPDATE query
-    new sql.Request().query(`UPDATE ScheduleSlots SET UserId = NULL, IsBooked = 'No', PeopleQuantity = 0 WHERE Id = ${scheduleSlotId}`, (err, result) => {
-        if (err) {
-            console.error("Error executing query:", err);
-            res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "An error occurred while resetting schedule slot." });
-        } else {
-            res.status(statusCodes.OK).json({ message: "Schedule slot reset successfully." });
-        }
+    return new Promise((resolve, reject) => {
+        // Execute an UPDATE query
+        const request = new sql.Request();
+        request.query(`UPDATE ScheduleSlots SET UserId = NULL, IsBooked = 'No', PeopleQuantity = 0 WHERE Id = ${scheduleSlotId}`, (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                const response = JSON.stringify({ error: "An error occurred while resetting reservation." });
+                reject(response);
+            } else {
+                const response = JSON.stringify({ message: "Reservation Canceled." });
+                resolve(response);
+            }
+        });
     });
-});
+};
 
-router.put("/updatescheduleslotquantity", (req, res) => {
-    const { scheduleSlotId, peopleQuantity } = req.query;
-
-    // Execute an UPDATE query
-    new sql.Request().query(`UPDATE ScheduleSlots SET PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
-        if (err) {
-            console.error("Error executing query:", err);
-            res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "An error occurred while updating schedule slot quantity." });
-        } else {
-            res.status(statusCodes.OK).json({ message: "Schedule slot quantity updated successfully." });
-        }
+const updateScheduleSlotQuantity = (jsonString) => {
+    const { scheduleSlotId, peopleQuantity } = JSON.parse(jsonString);
+    return new Promise((resolve, reject) => {
+        // Execute an UPDATE query
+        const request = new sql.Request();
+        request.query(`UPDATE ScheduleSlots SET PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                const response = JSON.stringify({ error: "An error occurred while updating reservation people quantity." });
+                reject(response);
+            } else {
+                const response = JSON.stringify({ message: "Reservation people quantity updated successfully." });
+                resolve(response);
+            }
+        });
     });
-});
+};
 
-router.post("/createscheduleslot", (req, res) => {
-    const { date, time } = req.query;
-
-    // Execute an INSERT query
-    new sql.Request().query(`INSERT INTO ScheduleSlots (Date, Time, IsBooked) VALUES ('${date}', '${time}', 'No')`, (err, result) => {
-        if (err) {
-            console.error("Error executing query:", err);
-            res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "An error occurred while creating schedule slot." });
-        } else {
-            res.status(statusCodes.OK).json({ message: "Schedule slot created successfully." });
-        }
+const createScheduleSlot = (jsonString) => {
+    const { date, time } = JSON.parse(jsonString);
+    return new Promise((resolve, reject) => {
+        // Execute an INSERT query
+        const request = new sql.Request();
+        request.query(`INSERT INTO ScheduleSlots (Date, Time, IsBooked) VALUES ('${date}', '${time}', 'No')`, (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                const response = JSON.stringify({ error: "An error occurred while creating reservation." });
+                reject(response);
+            } else {
+                const response = JSON.stringify({ message: "Reservation created successfully." });
+                resolve(response);
+            }
+        });
     });
-});
+};
 
-router.delete("/deletescheduleslot", (req, res) => {
-    const { scheduleSlotId } = req.query;
+const deleteScheduleSlot = (jsonString) => {
+    const { scheduleSlotId } = JSON.parse(jsonString);
 
-    // Execute a DELETE query
-    new sql.Request().query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
-        if (err) {
-            console.error("Error executing query:", err);
-            res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "An error occurred while deleting schedule slot." });
-        } else {
-            res.status(statusCodes.OK).json({ message: "Schedule slot deleted successfully." });
-        }
+    return new Promise((resolve, reject) => {
+        // Execute a DELETE query
+        const request = new sql.Request();
+        request.query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
+            if (err) {
+                console.error("Error executing query:", err);
+                const response = JSON.stringify({ error: "An error occurred while deleting reservation." });
+                reject(response);
+            } else {
+                const response = JSON.stringify({ message: "Reservation deleted successfully." });
+                resolve(response);
+            }
+        });
     });
-});
-*/
+};
 module.exports = {
     availableScheduleSlots,
-    userSchedulesLots
+    userSchedulesLots,
+    allScheduleSlots,
+    bookedScheduleSlots,
+    bookScheduleSlot,
+    cancelScheduleSlot,
+    updateScheduleSlotQuantity,
+    createScheduleSlot,
+    deleteScheduleSlot
 };
