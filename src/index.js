@@ -31,21 +31,26 @@ sql.connect(config, err => {
 
 // Set up a subscription to listen for messages
 const availableScheduleSlots_sub_name = 'booking-backend-getAllScheduleLots';
-const userSchedulesLots_sub_name = 'booking-backend-userSchedulesLots';
 const allScheduleSlots_sub_name = 'booking-backend-allScheduleSlots';
 const bookedScheduleSlots_sub_name = 'booking-backend-bookedScheduleSlots';
+const userSchedulesLots_sub_name = 'booking-backend-userSchedulesLots';
+const bookScheduleSlot_sub_name = 'booking-backend-bookScheduleSlot';
 
 
 const availableScheduleSlots_sub = pubsub.subscription(availableScheduleSlots_sub_name);
 const userSchedulesLots_sub = pubsub.subscription(userSchedulesLots_sub_name);
 const allScheduleSlots_sub = pubsub.subscription(allScheduleSlots_sub_name);
 const bookedScheduleSlots_sub = pubsub.subscription(bookedScheduleSlots_sub_name);
+const bookScheduleSlot_sub = pubsub.subscription(bookScheduleSlot_sub_name);
+
 
 // Start listening for messages
 availableScheduleSlots_sub.on('message', pubsubHelper.handleMessage_availableScheduleSlots);
-userSchedulesLots_sub.on('message', pubsubHelper.handleMessage_userSchedulesLots);
 allScheduleSlots_sub.on('message', pubsubHelper.handleMessage_allScheduleSlots);
 bookedScheduleSlots_sub.on('message', pubsubHelper.handleMessage_bookedScheduleSlots);
+userSchedulesLots_sub.on('message', pubsubHelper.handleMessage_userSchedulesLots);
+bookScheduleSlot_sub.on('message', pubsubHelper.handleMessage_bookScheduleSlot);
+
 
 module.exports = {
     app

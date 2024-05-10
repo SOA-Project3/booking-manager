@@ -14,7 +14,7 @@ const allScheduleSlots = () => {
                 console.error("Error executing query:", err);
                 reject(err);
             } else {
-                const jsonString = JSON.stringify(result.recordset);
+                const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 resolve(jsonString); // Resolve the Promise with the JSON string
             }
         });
@@ -29,7 +29,7 @@ const availableScheduleSlots = () => {
                 console.error("Error executing query:", err);
                 reject(err); // Reject the Promise with the error
             } else {
-                const jsonString = JSON.stringify(result.recordset);
+                const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 resolve(jsonString); // Resolve the Promise with the JSON string
             }
         });
@@ -45,7 +45,7 @@ const bookedScheduleSlots = () => {
                 console.error("Error executing query:", err);
                 reject(err);
             } else {
-                const jsonString = JSON.stringify(result.recordset);
+                const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 resolve(jsonString); // Resolve the Promise with the JSON string
             }
         });
@@ -58,12 +58,12 @@ const userSchedulesLots = (jsonString) => {
         const userId = Object.values(query)[0];
         console.log("UserId " + userId)
         // Execute a SELECT query
-        new sql.Request().query(`SELECT * FROM ScheduleSlots WHERE UserId = ${userId}`, (err, result) => {
+        new sql.Request().query(`SELECT * FROM ScheduleSlots WHERE UserId = '${userId}'`, (err, result) => {
             if (err) {
                 console.error("Error executing query:", err);
                 reject(err);
             } else {
-                const jsonString = JSON.stringify(result.recordset);
+                const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 console.log("Response "+jsonString)
                 resolve(jsonString);
             }
@@ -76,13 +76,13 @@ const bookScheduleSlot = (jsonString) => {
     return new Promise((resolve, reject) => {
         // Execute an UPDATE query
         const request = new sql.Request();
-        request.query(`UPDATE ScheduleSlots SET UserId = ${userId}, IsBooked = 'Yes', PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
+        request.query(`UPDATE ScheduleSlots SET UserId = '${userId}', IsBooked = 'Yes', PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
             if (err) {
                 console.error("Error executing query:", err);
-                const response = JSON.stringify({ error: "An error occurred while updating reservation." });
+                const response = JSON.stringify({ error: "An error occurred while updating reservation.", status: 400 });
                 reject(response);
             } else {
-                const response = JSON.stringify({ message: "Reservation updated successfully." });
+                const response = JSON.stringify({ message: "Reservation updated successfully.", status: 200 });
                 resolve(response);
             }
         });

@@ -8,8 +8,7 @@ const bookingController = require("../controllers/bookingController");
 
 async function publishMessage(topicName, data) {    
     let message = data;
-    message = JSON.stringify({message: data, status: 200});
-    if (!data || data.length === 0) {
+    if (!data || data.length === 0 || !data.message === 0) {
       message = JSON.stringify({message: 'data is empty', status: 404});
       console.log('No messages to publish');
     }
@@ -85,13 +84,33 @@ const handleMessage_bookedScheduleSlots = async (message) => {
     message.ack();
   } catch (error) {
     console.error('Error processing message:', error);
+    await publishMessage("recommendation-service", error);
   }
 };
+
+const handleMessage_bookScheduleSlot = async (message) => {
+  try {
+    // Process the received message
+    const data = message.data.toString();
+    console.log('Received message:', data);
+    // Get recommendation response from recommendation service
+    const bookedScheduleSlots_response = await bookingController.bookScheduleSlot(data);
+    // Publish the recommendation response
+    await publishMessage("recommendation-service", bookedScheduleSlots_response);
+
+    // Acknowledge the message to remove it from the subscription
+    message.ack();
+  } catch (error) {
+    console.error('Error processing message:', error);
+  }
+};
+
 
   
 module.exports = {
     handleMessage_availableScheduleSlots,
     handleMessage_userSchedulesLots,
     handleMessage_allScheduleSlots,
-    handleMessage_bookedScheduleSlots
+    handleMessage_bookedScheduleSlots,
+    handleMessage_bookScheduleSlot
 }
