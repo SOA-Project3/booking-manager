@@ -39,7 +39,7 @@ const userSchedulesLots_sub = pubsub.subscription(userSchedulesLots_sub_name);
 
 // Start listening for messages
 getAllScheduleLots_sub.on('message', pubsubHelper.handleMessage_getAllScheduleLots);
-getAllScheduleLots_sub.on('message', pubsubHelper.handleMessage_userSchedulesLots);
+userSchedulesLots_sub.on('message', pubsubHelper.handleMessage_userSchedulesLots);
 
 module.exports = {
     app

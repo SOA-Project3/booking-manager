@@ -26,10 +26,10 @@ const handleMessage_getAllScheduleLots = async (message) => {
       console.log('Received message:', data);
   
       // Get recommendation response from recommendation service
-      const recommendationResponse = await bookingController.getAllScheduleLots();
+      const getAllScheduleLots_response = await bookingController.getAllScheduleLots();
   
       // Publish the recommendation response
-      await publishMessage("recommendation-service", recommendationResponse);
+      await publishMessage("recommendation-service", getAllScheduleLots_response);
   
       // Acknowledge the message to remove it from the subscription
       message.ack();
@@ -45,10 +45,10 @@ const handleMessage_userSchedulesLots = async (message) => {
       console.log('Received message:', data);
   
       // Get recommendation response from recommendation service
-      const recommendationResponse = await bookingController.userSchedulesLots(data);
+      const userSchedulesLots_response = await bookingController.userSchedulesLots(data);
   
       // Publish the recommendation response
-      await publishMessage("recommendation-service", recommendationResponse);
+      await publishMessage("recommendation-service", userSchedulesLots_response);
   
       // Acknowledge the message to remove it from the subscription
       message.ack();
