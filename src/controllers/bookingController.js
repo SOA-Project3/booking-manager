@@ -45,7 +45,8 @@ const bookedScheduleSlots = () => {
                 console.error("Error executing query:", err);
                 reject(err);
             } else {
-                resolve(result.recordset);
+                const jsonString = JSON.stringify(result.recordset);
+                resolve(jsonString); // Resolve the Promise with the JSON string
             }
         });
     });
