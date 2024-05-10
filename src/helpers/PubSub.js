@@ -19,17 +19,13 @@ async function publishMessage(topicName, data) {
     }
 };
 
-const handleMessage_getAllScheduleLots = async (message) => {
+const handleMessage_availableScheduleSlots = async (message) => {
     try {
-      // Process the received message
-      const data = message.data.toString();
-      console.log('Received message:', data);
-  
       // Get recommendation response from recommendation service
-      const getAllScheduleLots_response = await bookingController.getAllScheduleLots();
+      const availableScheduleSlots_response = await bookingController.availableScheduleSlots();
   
       // Publish the recommendation response
-      await publishMessage("recommendation-service", getAllScheduleLots_response);
+      await publishMessage("recommendation-service", availableScheduleSlots_response);
   
       // Acknowledge the message to remove it from the subscription
       message.ack();
@@ -58,6 +54,6 @@ const handleMessage_userSchedulesLots = async (message) => {
 };
   
 module.exports = {
-    handleMessage_getAllScheduleLots,
+  handleMessage_availableScheduleSlots,
     handleMessage_userSchedulesLots
 }
