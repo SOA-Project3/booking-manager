@@ -12,7 +12,8 @@ const allScheduleSlots = () => {
         request.query("SELECT * FROM ScheduleSlots", (err, result) => {
             if (err) {
                 console.error("Error executing query:", err);
-                reject(err);
+                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
+                resolve(jsonString);
             } else {
                 const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 resolve(jsonString); // Resolve the Promise with the JSON string
@@ -27,7 +28,8 @@ const availableScheduleSlots = () => {
         new sql.Request().query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'No'", (err, result) => {
             if (err) {
                 console.error("Error executing query:", err);
-                reject(err); // Reject the Promise with the error
+                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
+                resolve(jsonString);
             } else {
                 const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 resolve(jsonString); // Resolve the Promise with the JSON string
@@ -43,7 +45,8 @@ const bookedScheduleSlots = () => {
         request.query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'Yes'", (err, result) => {
             if (err) {
                 console.error("Error executing query:", err);
-                reject(err);
+                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
+                resolve(jsonString);
             } else {
                 const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 resolve(jsonString); // Resolve the Promise with the JSON string
@@ -61,7 +64,8 @@ const userSchedulesLots = (jsonString) => {
         new sql.Request().query(`SELECT * FROM ScheduleSlots WHERE UserId = '${userId}'`, (err, result) => {
             if (err) {
                 console.error("Error executing query:", err);
-                reject(err);
+                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
+                resolve(jsonString);
             } else {
                 const jsonString = JSON.stringify({message : result.recordset, status: 200});
                 console.log("Response "+jsonString)
@@ -74,53 +78,116 @@ const userSchedulesLots = (jsonString) => {
 const bookScheduleSlot = (jsonString) => {
     const { userId, scheduleSlotId, peopleQuantity } = JSON.parse(jsonString);
     return new Promise((resolve, reject) => {
-        // Execute an UPDATE query
-        const request = new sql.Request();
-        request.query(`UPDATE ScheduleSlots SET UserId = '${userId}', IsBooked = 'Yes', PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const response = JSON.stringify({ error: "An error occurred while updating reservation.", status: 400 });
-                reject(response);
-            } else {
-                const response = JSON.stringify({ message: "Reservation updated successfully.", status: 200 });
+        // Check if the schedule slot is available (IsBooked is No)
+        const checkQuery = `SELECT IsBooked FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
+        const checkRequest = new sql.Request();
+        checkRequest.query(checkQuery, (checkErr, checkResult) => {
+            if (checkErr) {
+                console.error("Error executing check query:", checkErr);
+                const response = JSON.stringify({ error: "An error occurred while checking reservation availability.", status: 400 });
                 resolve(response);
+            } else {
+                if (checkResult.recordset.length === 0) {
+                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
+                    resolve(response);
+                } else if (checkResult.recordset[0].IsBooked === 'Yes') {
+                    const response = JSON.stringify({ error: "Schedule slot is already booked.", status: 400 });
+                    resolve(response);
+                } else {
+                    // Execute an UPDATE query
+                    const request = new sql.Request();
+                    request.query(`UPDATE ScheduleSlots SET UserId = '${userId}', IsBooked = 'Yes', PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
+                        if (err) {
+                            console.error("Error executing query:", err);
+                            const response = JSON.stringify({ error: "An error occurred while updating reservation.", status: 400 });
+                            resolve(response);
+                        } else {
+                            const response = JSON.stringify({ message: "Reservation created successfully.", status: 200 });
+                            resolve(response);
+                        }
+                    });
+                }
             }
         });
     });
 };
 
 const cancelScheduleSlot = (jsonString) => {
-    const { scheduleSlotId } = JSON.parse(jsonString);
+    const { scheduleSlotId, userId } = JSON.parse(jsonString);
 
     return new Promise((resolve, reject) => {
-        // Execute an UPDATE query
-        const request = new sql.Request();
-        request.query(`UPDATE ScheduleSlots SET UserId = NULL, IsBooked = 'No', PeopleQuantity = 0 WHERE Id = ${scheduleSlotId}`, (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const response = JSON.stringify({ error: "An error occurred while resetting reservation." });
-                reject(response);
-            } else {
-                const response = JSON.stringify({ message: "Reservation Canceled." });
+        // Check if the schedule slot is booked (IsBooked is Yes) by the specified user
+        const checkQuery = `SELECT IsBooked, UserId FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
+        const checkRequest = new sql.Request();
+        checkRequest.query(checkQuery, (checkErr, checkResult) => {
+            if (checkErr) {
+                console.error("Error executing check query:", checkErr);
+                const response = JSON.stringify({ error: "An error occurred while checking reservation status.", status: 400 });
                 resolve(response);
+            } else {
+                if (checkResult.recordset.length === 0) {
+                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
+                    resolve(response);
+                } else if (checkResult.recordset[0].IsBooked !== 'Yes') {
+                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 400 });
+                    resolve(response);
+                } else if (checkResult.recordset[0].UserId !== userId) {
+                    const response = JSON.stringify({ error: "You are not authorized to cancel this reservation.", status: 403 });
+                    resolve(response);
+                } else {
+                    // Execute the cancellation query
+                    const request = new sql.Request();
+                    request.query(`UPDATE ScheduleSlots SET UserId = NULL, IsBooked = 'No', PeopleQuantity = 0 WHERE Id = ${scheduleSlotId}`, (err, result) => {
+                        if (err) {
+                            console.error("Error executing query:", err);
+                            const response = JSON.stringify({ error: "An error occurred while canceling reservation, try again.", status: 400 });
+                            resolve(response);
+                        } else {
+                            const response = JSON.stringify({ message: "Reservation Canceled.", status: 200 });
+                            resolve(response);
+                        }
+                    });
+                }
             }
         });
     });
 };
 
 const updateScheduleSlotQuantity = (jsonString) => {
-    const { scheduleSlotId, peopleQuantity } = JSON.parse(jsonString);
+    const { scheduleSlotId, peopleQuantity, userId } = JSON.parse(jsonString);
     return new Promise((resolve, reject) => {
-        // Execute an UPDATE query
-        const request = new sql.Request();
-        request.query(`UPDATE ScheduleSlots SET PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const response = JSON.stringify({ error: "An error occurred while updating reservation people quantity." });
-                reject(response);
-            } else {
-                const response = JSON.stringify({ message: "Reservation people quantity updated successfully." });
+        // Check if the schedule slot is booked by the specified user
+        const checkQuery = `SELECT IsBooked, UserId FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
+        const checkRequest = new sql.Request();
+        checkRequest.query(checkQuery, (checkErr, checkResult) => {
+            if (checkErr) {
+                console.error("Error executing check query:", checkErr);
+                const response = JSON.stringify({ error: "An error occurred while checking reservation details." , status: 500});
                 resolve(response);
+            } else {
+                if (checkResult.recordset.length === 0) {
+                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
+                    resolve(response);
+                } else if (checkResult.recordset[0].IsBooked !== 'Yes') {
+                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 400 });
+                    resolve(response);
+                } else if (checkResult.recordset[0].UserId !== userId) {
+                    const response = JSON.stringify({ error: "You are not authorized to update this reservation.", status: 403 });
+                    resolve(response);
+                } else {
+                    // Execute the update query
+                    const request = new sql.Request();
+                    request.query(`UPDATE ScheduleSlots SET PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
+                        if (err) {
+                            console.error("Error executing query:", err);
+                            const response = JSON.stringify({ error: "An error occurred while updating reservation people quantity.", status: 500 });
+                            resolve(response);
+                        } else {
+                            const response = JSON.stringify({ message: "Reservation people quantity updated successfully.", status: 200 });
+                            resolve(response);
+                        }
+                    });
+                }
             }
         });
     });
@@ -135,7 +202,7 @@ const createScheduleSlot = (jsonString) => {
             if (err) {
                 console.error("Error executing query:", err);
                 const response = JSON.stringify({ error: "An error occurred while creating reservation." });
-                reject(response);
+                resolve(response);
             } else {
                 const response = JSON.stringify({ message: "Reservation created successfully." });
                 resolve(response);
@@ -148,16 +215,32 @@ const deleteScheduleSlot = (jsonString) => {
     const { scheduleSlotId } = JSON.parse(jsonString);
 
     return new Promise((resolve, reject) => {
-        // Execute a DELETE query
-        const request = new sql.Request();
-        request.query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const response = JSON.stringify({ error: "An error occurred while deleting reservation." });
-                reject(response);
-            } else {
-                const response = JSON.stringify({ message: "Reservation deleted successfully." });
+        // Check if the schedule slot ID exists
+        const checkQuery = `SELECT Id FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
+        const checkRequest = new sql.Request();
+        checkRequest.query(checkQuery, (checkErr, checkResult) => {
+            if (checkErr) {
+                console.error("Error executing check query:", checkErr);
+                const response = JSON.stringify({ error: "An error occurred while checking schedule slot existence.", status: 500 });
                 resolve(response);
+            } else {
+                if (checkResult.recordset.length === 0) {
+                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
+                    resolve(response);
+                } else {
+                    // Execute the DELETE query
+                    const request = new sql.Request();
+                    request.query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
+                        if (err) {
+                            console.error("Error executing query:", err);
+                            const response = JSON.stringify({ error: "An error occurred while deleting schedule slot.", status: 500 });
+                            resolve(response);
+                        } else {
+                            const response = JSON.stringify({ message: "Reservation deleted successfully.", status: 200 });
+                            resolve(response);
+                        }
+                    });
+                }
             }
         });
     });
