@@ -30,12 +30,7 @@ const handleMessage_bookScheduleSlot = async (message) => {
     // Process the received message
     const data = message.data.toString();
     console.log('Received message:', data);
-    // Get recommendation response from recommendation service
-    const bookedScheduleSlots_response = await bookingController.bookScheduleSlot(data);
-    // Publish the recommendation response
-    await publishMessage("recommendation-service", bookedScheduleSlots_response);
-
-    // Acknowledge the message to remove it from the subscription
+    await bookingController.bookScheduleSlot(data);
     message.ack();
   } catch (error) {
     console.error('Error processing message:', error);
@@ -47,12 +42,7 @@ const handleMessage_cancelScheduleSlot = async (message) => {
     // Process the received message
     const data = message.data.toString();
     console.log('Received message:', data);
-    // Get recommendation response from recommendation service
-    const cancelScheduleSlot_response = await bookingController.cancelScheduleSlot(data);
-    // Publish the recommendation response
-    await publishMessage("recommendation-service", cancelScheduleSlot_response);
-
-    // Acknowledge the message to remove it from the subscription
+    await bookingController.cancelScheduleSlot(data);
     message.ack();
   } catch (error) {
     console.error('Error processing message:', error);
@@ -64,12 +54,7 @@ const handleMessage_updateScheduleSlotQuantity = async (message) => {
     // Process the received message
     const data = message.data.toString();
     console.log('Received message:', data);
-    // Get recommendation response from recommendation service
-    const updateScheduleSlotQuantity_response = await bookingController.updateScheduleSlotQuantity(data);
-    // Publish the recommendation response
-    await publishMessage("recommendation-service", updateScheduleSlotQuantity_response);
-
-    // Acknowledge the message to remove it from the subscription
+    await bookingController.updateScheduleSlotQuantity(data);
     message.ack();
   } catch (error) {
     console.error('Error processing message:', error);
@@ -81,12 +66,7 @@ const handleMessage_createScheduleSlot = async (message) => {
     // Process the received message
     const data = message.data.toString();
     console.log('Received message:', data);
-    // Get recommendation response from recommendation service
-    const createScheduleSlot_response = await bookingController.createScheduleSlot(data);
-    // Publish the recommendation response
-    await publishMessage("recommendation-service", createScheduleSlot_response);
-
-    // Acknowledge the message to remove it from the subscription
+    await bookingController.createScheduleSlot(data);
     message.ack();
   } catch (error) {
     console.error('Error processing message:', error);
