@@ -273,7 +273,7 @@ const deleteScheduleSlot = (jsonString) => {
 
     // Check if the schedule slot ID exists
     const checkQuery = `SELECT * FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
-    const subject = "Delete Reservation"
+    const subject = `Delete Schedule Slot number ${scheduleSlotId}`
     const checkRequest = new sql.Request();
     checkRequest.query(checkQuery, (checkErr, checkResult) => {
         if (checkErr) {
@@ -281,33 +281,19 @@ const deleteScheduleSlot = (jsonString) => {
             emailer.sendEmail(subject,`Error occurred while checking schedule slot existence under reservation number: ${scheduleSlotId}.`, "soagrupo6@gmail.com");
         } else {
             if (checkResult.recordset.length === 0) {
-                emailer.sendEmail(subject, `No reservation was found under reservation number: ${scheduleSlotId}`, "soagrupo6@gmail.com");
+                emailer.sendEmail(subject, `No schedule slots  was found under number: ${scheduleSlotId}`, "soagrupo6@gmail.com");
             } else {
-                const reservationInfo = checkResult.recordset[0];
                 // Retrieve user's name from UserData table using UserId
-                const userQuery = `SELECT Fullname FROM UserData WHERE Id = '${reservationInfo.UserId}'`;
-                const userRequest = new sql.Request();
-                userRequest.query(userQuery, (userErr, userResult) => {
-                    if (userErr) {
-                        console.error("Error executing user query:", userErr);
-                        emailer.sendEmail(subject, `Error occurred while checking schedule slot existence under reservation number: ${scheduleSlotId}.`, "soagrupo6@gmail.com");   
+                const request = new sql.Request();
+                request.query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
+                    if (err) {
+                        console.error("Error executing query:", err);
+                        emailer.sendEmail(subject, `Error occurred while checking schedule slot existence under reservation number: ${scheduleSlotId}. Please contact support: soagrupo6@gmail.com`, "soagrupo6@gmail.com");
                     } else {
-                        const userName = userResult.recordset[0].Fullname;
-                        // Format date and time
-                        const dateTime = new Date(reservationInfo.DateTime).toLocaleString();
-                        // Execute the DELETE query
-                        const request = new sql.Request();
-                        request.query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
-                            if (err) {
-                                console.error("Error executing query:", err);
-                                emailer.sendEmail(subject, `Error occurred while checking schedule slot existence under reservation number: ${scheduleSlotId}. Please contact support: soagrupo6@gmail.com`, "soagrupo6@gmail.com");
-                            } else {
-                                emailer.sendEmail(subject, `Reservation deleted successfully for ${userName}. Details: Date and Time: ${dateTime}, People Quantity: ${reservationInfo.PeopleQuantity}`, "soagrupo6@gmail.com");
-                            }
-                        });
+                        emailer.sendEmail(subject, `Reservation deleted successfully for ${scheduleSlotId}.`, "soagrupo6@gmail.com");
                     }
                 });
-            }
+    }
         }
     });
 };
