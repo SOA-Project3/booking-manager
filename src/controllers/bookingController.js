@@ -256,7 +256,7 @@ const createScheduleSlot = (jsonString) => {
         request.query(`INSERT INTO ScheduleSlots (DateTime, IsBooked) VALUES ('${sqlDateTime}', 'No')`);
         // Send email notification
         const subject = `Schedule Slot created`;
-        const message = `Reservation created successfully. Details: Time: ${sqlDateTime.toLocaleString()}`;
+        const message = `Schedule Slot created successfully. Details: Time: ${sqlDateTime.toLocaleString()}`;
         console.log(message);
         emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
     } catch (err) {
