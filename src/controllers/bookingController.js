@@ -80,29 +80,47 @@ const bookScheduleSlot = (jsonString) => {
     const { userId, scheduleSlotId, peopleQuantity } = JSON.parse(jsonString);
     return new Promise((resolve, reject) => {
         // Check if the schedule slot is available (IsBooked is No)
-        const checkQuery = `SELECT IsBooked FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
+        const checkQuery = `SELECT DateTime, IsBooked FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
         const checkRequest = new sql.Request();
         checkRequest.query(checkQuery, (checkErr, checkResult) => {
             if (checkErr) {
                 console.error("Error executing check query:", checkErr);
-                const response = JSON.stringify({ error: "An error occurred while checking reservation availability.", status: 400 });
+                    const subject = `Error Creating Reservation Number ${scheduleSlotId}`;
+                    const message = "An error occurred while checking reservation details.";
+                    const response = JSON.stringify({ error: message, status: 500 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                 resolve(response);
             } else {
                 if (checkResult.recordset.length === 0) {
-                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
+                    const subject = `Error Creating Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. Schedule slot not found.";
+                    const response = JSON.stringify({ error: message, status: 404 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else if (checkResult.recordset[0].IsBooked === 'Yes') {
-                    const response = JSON.stringify({ error: "Schedule slot is already booked.", status: 200 });
+                    const subject = `Error Creating Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. Schedule slot is already booked.";
+                    const response = JSON.stringify({ error: message, status: 403 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else {
+                    const slotInfo = checkResult.recordset[0];
                     // Execute an UPDATE query
                     const request = new sql.Request();
                     request.query(`UPDATE ScheduleSlots SET UserId = '${userId}', IsBooked = 'Yes', PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
                         if (err) {
                             console.error("Error executing query:", err);
-                            const response = JSON.stringify({ error: "An error occurred while updating reservation.", status: 400 });
+                            const subject = `Error Creating Reservation Number ${scheduleSlotId}`;
+                            const message = "An error occurred while updating reservation details.";
+                            const response = JSON.stringify({ error: message, status: 500 });
+                            emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                             resolve(response);
                         } else {
+                            // Send email notification
+                            const subject = "Reservation Created";
+                            const message = `Reservation created successfully for User: ${userId}. Details: Date: ${slotInfo.DateTime.toLocaleDateString()}, Time: ${slotInfo.DateTime.toLocaleTimeString()}, People Quantity: ${peopleQuantity}`;
+                            emailer.sendEmail(subject, message, userId);
+
                             const response = JSON.stringify({ message: "Reservation created successfully.", status: 200 });
                             resolve(response);
                         }
@@ -163,29 +181,68 @@ const updateScheduleSlotQuantity = (jsonString) => {
         checkRequest.query(checkQuery, (checkErr, checkResult) => {
             if (checkErr) {
                 console.error("Error executing check query:", checkErr);
-                const response = JSON.stringify({ error: "An error occurred while checking reservation details." , status: 500});
+                    const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
+                    const message = "An error occurred while checking reservation details.";
+                    const response = JSON.stringify({ error: message, status: 500 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                 resolve(response);
             } else {
                 if (checkResult.recordset.length === 0) {
-                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
+                    const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. Schedule slot not found.";
+                    const response = JSON.stringify({ error: message, status: 404 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else if (checkResult.recordset[0].IsBooked !== 'Yes') {
-                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 200 });
+                    const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. Schedule slot is not booked";
+                    const response = JSON.stringify({ error: message, status: 403 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else if (checkResult.recordset[0].UserId !== userId) {
-                    const response = JSON.stringify({ error: "You are not authorized to update this reservation. It is not under your name", status: 403 });
+                    const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. It is not under user id" +  `${userId}` ;
+                    const response = JSON.stringify({ error: message, status: 403 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else {
-                    // Execute the update query
-                    const request = new sql.Request();
-                    request.query(`UPDATE ScheduleSlots SET PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
-                        if (err) {
-                            console.error("Error executing query:", err);
-                            const response = JSON.stringify({ error: "An error occurred while updating reservation people quantity.", status: 500 });
+                    // Retrieve reservation details
+                    const reservationQuery = `SELECT s.DateTime, s.PeopleQuantity, u.Fullname
+                                              FROM ScheduleSlots s
+                                              INNER JOIN UserData u ON s.UserId = u.Id
+                                              WHERE s.Id = ${scheduleSlotId}`;
+                    const reservationRequest = new sql.Request();
+                    reservationRequest.query(reservationQuery, (reservationErr, reservationResult) => {
+                        if (reservationErr) {
+                            console.error("Error executing reservation query:", reservationErr);
+                            const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
+                            const message = "An error occurred while retrieving reservation details.";
+                            const response = JSON.stringify({ error: message, status: 500 });
+                            emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                             resolve(response);
                         } else {
-                            const response = JSON.stringify({ message: "Reservation people quantity updated successfully.", status: 200 });
-                            resolve(response);
+                            const reservationInfo = reservationResult.recordset[0];
+                            const { DateTime, PeopleQuantity, Fullname } = reservationInfo;
+                            // Execute the update query
+                            const request = new sql.Request();
+                            request.query(`UPDATE ScheduleSlots SET PeopleQuantity = ${peopleQuantity} WHERE Id = ${scheduleSlotId}`, (err, result) => {
+                                if (err) {
+                                    console.error("Error executing query:", err);
+                                    const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
+                                    const message = "An error occurred while updating reservation people quantity.";
+                                    const response = JSON.stringify({ error: message, status: 500 });
+                                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
+                                    resolve(response);
+                                } else {
+                                    // Send email notification
+                                    const subject = `Update Reservation Number ${scheduleSlotId}`;
+                                    const message = `Reservation people quantity updated successfully for ${Fullname}. Details: Time: ${DateTime.toLocaleString()}, People Quantity: ${PeopleQuantity}`;
+                                    emailer.sendEmail(subject, message, reservationInfo.UserId);
+                                    
+                                    const response = JSON.stringify({ message: "Reservation people quantity updated successfully.", status: 200 });
+                                    resolve(response);
+                                }
+                            });
                         }
                     });
                 }
