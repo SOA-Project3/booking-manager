@@ -136,32 +136,54 @@ const cancelScheduleSlot = (jsonString) => {
 
     return new Promise((resolve, reject) => {
         // Check if the schedule slot is booked (IsBooked is Yes) by the specified user
-        const checkQuery = `SELECT IsBooked, UserId FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
+        const checkQuery = `SELECT DateTime, PeopleQuantity, IsBooked, UserId FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
         const checkRequest = new sql.Request();
         checkRequest.query(checkQuery, (checkErr, checkResult) => {
             if (checkErr) {
                 console.error("Error executing check query:", checkErr);
-                const response = JSON.stringify({ error: "An error occurred while checking reservation status.", status: 400 });
+                const subject = `Error Canceling Reservation Number ${scheduleSlotId}`;
+                    const message = "An error occurred while checking reservation details.";
+                    const response = JSON.stringify({ error: message, status: 500 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                 resolve(response);
             } else {
                 if (checkResult.recordset.length === 0) {
-                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
+                    const subject = `Error Canceling Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. Schedule slot not found.";
+                    const response = JSON.stringify({ error: message, status: 404 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else if (checkResult.recordset[0].IsBooked !== 'Yes') {
-                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 200 });
+                    const subject = `Error Canceling Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. Schedule slot not found.";
+                    const response = JSON.stringify({ error: message, status: 404 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else if (checkResult.recordset[0].UserId !== userId) {
-                    const response = JSON.stringify({ error: "You are not authorized to cancel this reservation, it is not under your name", status: 403 });
+                    const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
+                    const message = "User is not authorized to update this reservation. It is not under user id: " +  `${userId}` ;
+                    const response = JSON.stringify({ error: message, status: 403 });
+                    emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
                 } else {
+                    const { DateTime, PeopleQuantity, UserId } = checkResult.recordset[0];
                     // Execute the cancellation query
                     const request = new sql.Request();
                     request.query(`UPDATE ScheduleSlots SET UserId = NULL, IsBooked = 'No', PeopleQuantity = 0 WHERE Id = ${scheduleSlotId}`, (err, result) => {
                         if (err) {
                             console.error("Error executing query:", err);
-                            const response = JSON.stringify({ error: "An error occurred while canceling reservation, try again.", status: 400 });
+                            const subject = `Error Canceling Reservation Number ${scheduleSlotId}`;
+                            const message = "An error occurred while canceling reservation";
+                            const response = JSON.stringify({ error: message, status: 500 });
+                            emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                             resolve(response);
                         } else {
+                            // Send email notification
+                            const dateTime = new Date(DateTime).toLocaleString();
+                            const subject = `Canceled Reservation Number ${scheduleSlotId}`;
+                            const message = `Reservation canceled successfully. Details: Date: ${dateTime}, People Quantity: ${PeopleQuantity}`;
+                            emailer.sendEmail(subject, message, UserId);
+
                             const response = JSON.stringify({ message: "Reservation Canceled.", status: 200 });
                             resolve(response);
                         }
@@ -201,7 +223,7 @@ const updateScheduleSlotQuantity = (jsonString) => {
                     resolve(response);
                 } else if (checkResult.recordset[0].UserId !== userId) {
                     const subject = `Error Updating Reservation Number ${scheduleSlotId}`;
-                    const message = "User is not authorized to update this reservation. It is not under user id" +  `${userId}` ;
+                    const message = "User is not authorized to update this reservation. It is not under user id: " +  `${userId}` ;
                     const response = JSON.stringify({ error: message, status: 403 });
                     emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
                     resolve(response);
