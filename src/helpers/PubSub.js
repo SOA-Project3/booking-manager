@@ -25,69 +25,6 @@ async function publishMessage(topicName, data) {
     }
 };
 
-const handleMessage_availableScheduleSlots = async (message) => {
-    try {
-      // Get recommendation response from recommendation service
-      const availableScheduleSlots_response = await bookingController.availableScheduleSlots();
-  
-      // Publish the recommendation response
-      await publishMessage("recommendation-service", availableScheduleSlots_response);
-  
-      // Acknowledge the message to remove it from the subscription
-      message.ack();
-    } catch (error) {
-      console.error('Error processing message:', error);
-    }
-};
-
-const handleMessage_userSchedulesLots = async (message) => {
-    try {
-      // Process the received message
-      const data = message.data.toString();
-      console.log('Received message:', data);
-  
-      // Get recommendation response from recommendation service
-      const userSchedulesLots_response = await bookingController.userSchedulesLots(data);
-  
-      // Publish the recommendation response
-      await publishMessage("recommendation-service", userSchedulesLots_response);
-  
-      // Acknowledge the message to remove it from the subscription
-      message.ack();
-    } catch (error) {
-      console.error('Error processing message:', error);
-    }
-};
-
-const handleMessage_allScheduleSlots = async (message) => {
-  try {
-    // Get recommendation response from recommendation service
-    const allScheduleSlots_response = await bookingController.allScheduleSlots();
-    // Publish the recommendation response
-    await publishMessage("recommendation-service", allScheduleSlots_response);
-
-    // Acknowledge the message to remove it from the subscription
-    message.ack();
-  } catch (error) {
-    console.error('Error processing message:', error);
-  }
-};
-
-const handleMessage_bookedScheduleSlots = async (message) => {
-  try {
-    // Get recommendation response from recommendation service
-    const bookedScheduleSlots_response = await bookingController.bookedScheduleSlots();
-    // Publish the recommendation response
-    await publishMessage("recommendation-service", bookedScheduleSlots_response);
-
-    // Acknowledge the message to remove it from the subscription
-    message.ack();
-  } catch (error) {
-    console.error('Error processing message:', error);
-    await publishMessage("recommendation-service", error);
-  }
-};
-
 const handleMessage_bookScheduleSlot = async (message) => {
   try {
     // Process the received message
@@ -161,12 +98,7 @@ const handleMessage_deleteScheduleSlot = async (message) => {
     // Process the received message
     const data = message.data.toString();
     console.log('Received message:', data);
-    // Get recommendation response from recommendation service
-    const deleteScheduleSlot_response = await bookingController.deleteScheduleSlot(data);
-    // Publish the recommendation response
-    await publishMessage("recommendation-service", deleteScheduleSlot_response);
-
-    // Acknowledge the message to remove it from the subscription
+    await bookingController.deleteScheduleSlot(data);
     message.ack();
   } catch (error) {
     console.error('Error processing message:', error);
@@ -177,10 +109,6 @@ const handleMessage_deleteScheduleSlot = async (message) => {
 
   
 module.exports = {
-    handleMessage_availableScheduleSlots,
-    handleMessage_userSchedulesLots,
-    handleMessage_allScheduleSlots,
-    handleMessage_bookedScheduleSlots,
     handleMessage_bookScheduleSlot,
     handleMessage_cancelScheduleSlot,
     handleMessage_updateScheduleSlotQuantity,

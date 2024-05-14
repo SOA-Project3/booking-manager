@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const sql = require("mssql");
+const emailer = require("../helpers/emailHelper");
 const statusCodes = require("../constants/statusCodes");
 
 
@@ -91,7 +92,7 @@ const bookScheduleSlot = (jsonString) => {
                     const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
                     resolve(response);
                 } else if (checkResult.recordset[0].IsBooked === 'Yes') {
-                    const response = JSON.stringify({ error: "Schedule slot is already booked.", status: 400 });
+                    const response = JSON.stringify({ error: "Schedule slot is already booked.", status: 200 });
                     resolve(response);
                 } else {
                     // Execute an UPDATE query
@@ -129,10 +130,10 @@ const cancelScheduleSlot = (jsonString) => {
                     const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
                     resolve(response);
                 } else if (checkResult.recordset[0].IsBooked !== 'Yes') {
-                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 400 });
+                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 200 });
                     resolve(response);
                 } else if (checkResult.recordset[0].UserId !== userId) {
-                    const response = JSON.stringify({ error: "You are not authorized to cancel this reservation.", status: 403 });
+                    const response = JSON.stringify({ error: "You are not authorized to cancel this reservation, it is not under your name", status: 403 });
                     resolve(response);
                 } else {
                     // Execute the cancellation query
@@ -169,10 +170,10 @@ const updateScheduleSlotQuantity = (jsonString) => {
                     const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
                     resolve(response);
                 } else if (checkResult.recordset[0].IsBooked !== 'Yes') {
-                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 400 });
+                    const response = JSON.stringify({ error: "Schedule slot is not booked.", status: 200 });
                     resolve(response);
                 } else if (checkResult.recordset[0].UserId !== userId) {
-                    const response = JSON.stringify({ error: "You are not authorized to update this reservation.", status: 403 });
+                    const response = JSON.stringify({ error: "You are not authorized to update this reservation. It is not under your name", status: 403 });
                     resolve(response);
                 } else {
                     // Execute the update query
@@ -214,37 +215,47 @@ const createScheduleSlot = (jsonString) => {
 const deleteScheduleSlot = (jsonString) => {
     const { scheduleSlotId } = JSON.parse(jsonString);
 
-    return new Promise((resolve, reject) => {
-        // Check if the schedule slot ID exists
-        const checkQuery = `SELECT Id FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
-        const checkRequest = new sql.Request();
-        checkRequest.query(checkQuery, (checkErr, checkResult) => {
-            if (checkErr) {
-                console.error("Error executing check query:", checkErr);
-                const response = JSON.stringify({ error: "An error occurred while checking schedule slot existence.", status: 500 });
-                resolve(response);
+    // Check if the schedule slot ID exists
+    const checkQuery = `SELECT * FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`;
+    const subject = "Delete Reservation"
+    const checkRequest = new sql.Request();
+    checkRequest.query(checkQuery, (checkErr, checkResult) => {
+        if (checkErr) {
+            console.error("Error executing check query:", checkErr);
+            emailer.sendEmail(subject,`Error occurred while checking schedule slot existence under reservation number: ${scheduleSlotId}.`, "soagrupo6@gmail.com");
+        } else {
+            if (checkResult.recordset.length === 0) {
+                emailer.sendEmail(subject, `No reservation was found under reservation number: ${scheduleSlotId}`, "soagrupo6@gmail.com");
             } else {
-                if (checkResult.recordset.length === 0) {
-                    const response = JSON.stringify({ error: "Schedule slot not found.", status: 404 });
-                    resolve(response);
-                } else {
-                    // Execute the DELETE query
-                    const request = new sql.Request();
-                    request.query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
-                        if (err) {
-                            console.error("Error executing query:", err);
-                            const response = JSON.stringify({ error: "An error occurred while deleting schedule slot.", status: 500 });
-                            resolve(response);
-                        } else {
-                            const response = JSON.stringify({ message: "Reservation deleted successfully.", status: 200 });
-                            resolve(response);
-                        }
-                    });
-                }
+                const reservationInfo = checkResult.recordset[0];
+                // Retrieve user's name from UserData table using UserId
+                const userQuery = `SELECT Fullname FROM UserData WHERE Id = '${reservationInfo.UserId}'`;
+                const userRequest = new sql.Request();
+                userRequest.query(userQuery, (userErr, userResult) => {
+                    if (userErr) {
+                        console.error("Error executing user query:", userErr);
+                        emailer.sendEmail(subject, `Error occurred while checking schedule slot existence under reservation number: ${scheduleSlotId}.`, "soagrupo6@gmail.com");   
+                    } else {
+                        const userName = userResult.recordset[0].Fullname;
+                        // Format date and time
+                        const dateTime = new Date(reservationInfo.DateTime).toLocaleString();
+                        // Execute the DELETE query
+                        const request = new sql.Request();
+                        request.query(`DELETE FROM ScheduleSlots WHERE Id = ${scheduleSlotId}`, (err, result) => {
+                            if (err) {
+                                console.error("Error executing query:", err);
+                                emailer.sendEmail(subject, `Error occurred while checking schedule slot existence under reservation number: ${scheduleSlotId}. Please contact support: soagrupo6@gmail.com`, "soagrupo6@gmail.com");
+                            } else {
+                                emailer.sendEmail(subject, `Reservation deleted successfully for ${userName}. Details: Date and Time: ${dateTime}, People Quantity: ${reservationInfo.PeopleQuantity}`, "soagrupo6@gmail.com");
+                            }
+                        });
+                    }
+                });
             }
-        });
+        }
     });
 };
+
 module.exports = {
     availableScheduleSlots,
     userScheduleSlots,
