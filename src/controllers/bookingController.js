@@ -293,7 +293,7 @@ const deleteScheduleSlot = (jsonString) => {
                         emailer.sendEmail(subject, `Reservation deleted successfully for ${scheduleSlotId}.`, "soagrupo6@gmail.com");
                     }
                 });
-    }
+            }
         }
     });
 };
