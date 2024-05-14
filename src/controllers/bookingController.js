@@ -1,57 +1,59 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const sql = require("mssql");
+const statusCodes = require("../constants/statusCodes");
+
 
 const router = express.Router();
 router.use(bodyParser.json());
 
-const allScheduleSlots = () => {
-    return new Promise((resolve, reject) => {
-        // Execute a SELECT query
-        const request = new sql.Request();
-        request.query("SELECT * FROM ScheduleSlots", (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
-                resolve(jsonString);
+const allScheduleSlots = (req, res) => {
+    const request = new sql.Request();
+    request.query("SELECT * FROM ScheduleSlots", (err, result) => {
+        if (err) {
+            console.error("Error executing query:", err);
+            return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
+        } else {
+            if (result.recordset.length === 0) {
+                return res.status(statusCodes.NOT_FOUND).json({ message: "No schedule slots found" });
             } else {
-                const jsonString = JSON.stringify({message : result.recordset, status: 200});
-                resolve(jsonString); // Resolve the Promise with the JSON string
+                return res.status(statusCodes.OK).json({ message: result.recordset });
             }
-        });
+        }
     });
 };
 
-const availableScheduleSlots = () => {
-    return new Promise((resolve, reject) => {
-        // Execute a SELECT query
-        new sql.Request().query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'No'", (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
-                resolve(jsonString);
+const availableScheduleSlots = (req, res) => {
+    // Execute a SELECT query
+    new sql.Request().query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'No'", (err, result) => {
+        if (err) {
+            console.error("Error executing query:", err);
+            return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
+        } else {
+            if (result.recordset.length === 0) {
+                return res.status(statusCodes.NOT_FOUND).json({ message: "No available schedule slots found" });
             } else {
-                const jsonString = JSON.stringify({message : result.recordset, status: 200});
-                resolve(jsonString); // Resolve the Promise with the JSON string
+                return res.status(statusCodes.OK).json({ message: result.recordset });
             }
-        });
+        }
     });
 };
 
-const bookedScheduleSlots = () => {
-    return new Promise((resolve, reject) => {
-        // Execute a SELECT query
-        const request = new sql.Request();
-        request.query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'Yes'", (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
-                resolve(jsonString);
+
+const bookedScheduleSlots = (req, res) => {
+    // Execute a SELECT query
+    const request = new sql.Request();
+    request.query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'Yes'", (err, result) => {
+        if (err) {
+            console.error("Error executing query:", err);
+            return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
+        } else {
+            if (result.recordset.length === 0) {
+                return res.status(statusCodes.NOT_FOUND).json({ message: "No booked schedule slots found" });
             } else {
-                const jsonString = JSON.stringify({message : result.recordset, status: 200});
-                resolve(jsonString); // Resolve the Promise with the JSON string
+                return res.status(statusCodes.OK).json({ message: result.recordset });
             }
-        });
+        }
     });
 };
 
