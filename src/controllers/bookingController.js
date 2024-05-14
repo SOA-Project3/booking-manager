@@ -57,23 +57,21 @@ const bookedScheduleSlots = (req, res) => {
     });
 };
 
-const userSchedulesLots = (jsonString) => {
-    return new Promise((resolve, reject) => {
-        const query = JSON.parse(jsonString);
-        const userId = Object.values(query)[0];
-        console.log("UserId " + userId)
-        // Execute a SELECT query
-        new sql.Request().query(`SELECT * FROM ScheduleSlots WHERE UserId = '${userId}'`, (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const jsonString = JSON.stringify({error : "Error executing query", status: 500});
-                resolve(jsonString);
+const userScheduleSlots = (req, res) => {
+    const { userId } = req.query;
+
+    // Ejecutar una consulta SELECT
+    new sql.Request().query(`SELECT * FROM ScheduleSlots WHERE UserId = '${userId}'`, (err, result) => {
+        if (err) {
+            console.error("Error executing query:", err);
+            return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
+        } else {
+            if (result.recordset.length === 0) {
+                return res.status(statusCodes.NOT_FOUND).json({ message: "No schedule slots found for the specified user" });
             } else {
-                const jsonString = JSON.stringify({message : result.recordset, status: 200});
-                console.log("Response "+jsonString)
-                resolve(jsonString);
+                return res.status(statusCodes.OK).json({ message: result.recordset });
             }
-        });
+        }
     });
 };
 
@@ -249,7 +247,7 @@ const deleteScheduleSlot = (jsonString) => {
 };
 module.exports = {
     availableScheduleSlots,
-    userSchedulesLots,
+    userScheduleSlots,
     allScheduleSlots,
     bookedScheduleSlots,
     bookScheduleSlot,

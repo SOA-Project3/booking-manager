@@ -1,5 +1,5 @@
 run:
-	gcloud functions deploy booking --runtime nodejs18 --trigger-topic booking-backend --entry-point app --allow-unauthenticated
+	gcloud functions deploy booking --runtime nodejs18 --trigger-http --entry-point app --allow-unauthenticated
 
 
 set: 
