@@ -16,7 +16,7 @@ const allScheduleSlots = (req, res) => {
             return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
         } else {
             if (result.recordset.length === 0) {
-                return res.status(statusCodes.NOT_FOUND).json({ message: "No schedule slots found" });
+                return res.status(statusCodes.OK).json({ message: "No schedule slots found" });
             } else {
                 return res.status(statusCodes.OK).json({ message: result.recordset });
             }
@@ -32,7 +32,7 @@ const availableScheduleSlots = (req, res) => {
             return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
         } else {
             if (result.recordset.length === 0) {
-                return res.status(statusCodes.NOT_FOUND).json({ message: "No available schedule slots found" });
+                return res.status(statusCodes.OK).json({ message: "No available schedule slots found" });
             } else {
                 return res.status(statusCodes.OK).json({ message: result.recordset });
             }
@@ -50,7 +50,7 @@ const bookedScheduleSlots = (req, res) => {
             return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
         } else {
             if (result.recordset.length === 0) {
-                return res.status(statusCodes.NOT_FOUND).json({ message: "No booked schedule slots found" });
+                return res.status(statusCodes.OK).json({ message: "No booked schedule slots found" });
             } else {
                 return res.status(statusCodes.OK).json({ message: result.recordset });
             }
@@ -68,7 +68,7 @@ const userScheduleSlots = (req, res) => {
             return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
         } else {
             if (result.recordset.length === 0) {
-                return res.status(statusCodes.NOT_FOUND).json({ message: "No schedule slots found for the specified user" });
+                return res.status(statusCodes.OK).json({ message: "No schedule slots found for the specified user" });
             } else {
                 return res.status(statusCodes.OK).json({ message: result.recordset });
             }
@@ -247,22 +247,25 @@ const updateScheduleSlotQuantity = (jsonString) => {
     });
 };
 
-const createScheduleSlot = (jsonString) => {
-    const { date, time } = JSON.parse(jsonString);
-    return new Promise((resolve, reject) => {
-        // Execute an INSERT query
-        const request = new sql.Request();
-        request.query(`INSERT INTO ScheduleSlots (Date, Time, IsBooked) VALUES ('${date}', '${time}', 'No')`, (err, result) => {
-            if (err) {
-                console.error("Error executing query:", err);
-                const response = JSON.stringify({ error: "An error occurred while creating reservation." });
-                resolve(response);
-            } else {
-                const response = JSON.stringify({ message: "Reservation created successfully." });
-                resolve(response);
-            }
-        });
-    });
+const createScheduleSlot = async (jsonString) => {
+    const { datetime } = JSON.parse(jsonString); // Assuming you pass a single datetime field in your JSON
+    const sqlDateTime = new Date(datetime).toISOString().slice(0, 19).replace('T', ' '); // Format the datetime as 'YYYY-MM-DD HH:mm:ss'
+    
+    const request = new sql.Request();
+    try {
+        await request.query(`INSERT INTO ScheduleSlots (DateTime, IsBooked) VALUES ('${sqlDateTime}', 'No')`);
+        // Send email notification
+        const subject = `Schedule Slot created`;
+        const message = `Reservation created successfully. Details: Time: ${DateTime.toLocaleString()}`;
+        console.log(message);
+        emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
+    } catch (err) {
+        console.error("Error executing query:", err);
+        const subject = `Schedule Slot creation error`;
+        const message = `Error occurr while creating schedule slot`;
+        console.log(message);
+        emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
+    }
 };
 
 const deleteScheduleSlot = (jsonString) => {
