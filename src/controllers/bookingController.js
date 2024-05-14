@@ -247,13 +247,13 @@ const updateScheduleSlotQuantity = (jsonString) => {
     });
 };
 
-const createScheduleSlot = async (jsonString) => {
+const createScheduleSlot = (jsonString) => {
     const { datetime } = JSON.parse(jsonString); // Assuming you pass a single datetime field in your JSON
     const sqlDateTime = new Date(datetime).toISOString().slice(0, 19).replace('T', ' '); // Format the datetime as 'YYYY-MM-DD HH:mm:ss'
     
     const request = new sql.Request();
     try {
-        await request.query(`INSERT INTO ScheduleSlots (DateTime, IsBooked) VALUES ('${sqlDateTime}', 'No')`);
+        request.query(`INSERT INTO ScheduleSlots (DateTime, IsBooked) VALUES ('${sqlDateTime}', 'No')`);
         // Send email notification
         const subject = `Schedule Slot created`;
         const message = `Reservation created successfully. Details: Time: ${sqlDateTime.toLocaleString()}`;
