@@ -44,7 +44,7 @@ router.get("/availableScheduleSlots", booking.availableScheduleSlots);
 router.get("/bookedScheduleSlots", booking.bookedScheduleSlots); 
 router.get("/bookedScheduleSlots", booking.bookedScheduleSlots); 
 router.get("/userScheduleSlots", booking.userScheduleSlots); 
-
+/*
 // Set up a subscription to listen for messages
 const bookScheduleSlot_sub_name = 'booking-backend-bookScheduleSlot';
 const cancelScheduleSlot_sub_name = 'booking-backend-cancelScheduleSlot';
@@ -65,7 +65,7 @@ cancelScheduleSlot_sub.on('message', pubsubHelper.handleMessage_cancelScheduleSl
 updateScheduleSlotQuantity_sub.on('message', pubsubHelper.handleMessage_updateScheduleSlotQuantity);
 deleteScheduleSlot_sub.on('message', pubsubHelper.handleMessage_deleteScheduleSlot);
 createScheduleSlot_sub.on('message', pubsubHelper.handleMessage_createScheduleSlot);
-
+*/
 app.use(router); 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
