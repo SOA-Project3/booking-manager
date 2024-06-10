@@ -34,6 +34,7 @@ sql.connect(config, err => {
 const booking = require("./controllers/bookingController");
 router.get("/allScheduleSlots", booking.allScheduleSlots); 
 router.get("/availableScheduleSlots", booking.availableScheduleSlots); 
+router.get("/getScheduleSlotsByAdminId", booking.getScheduleSlotsByAdminId); 
 router.get("/userScheduleSlots", booking.userScheduleSlots); 
 router.get("/bookedScheduleSlots", booking.bookedScheduleSlots); 
 router.put("/bookScheduleSlot", booking.bookScheduleSlot); 
