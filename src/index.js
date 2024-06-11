@@ -3,7 +3,6 @@ const sql = require("mssql");
 const bodyParser = require('body-parser');
 const port = 3000; 
 const verifyToken = require("./helpers/verifyToken");
-const crypto = require('crypto');
 
 const app = express(); //Main express app
 const router = express.Router(); 
@@ -31,16 +30,16 @@ sql.connect(config, err => {
 
 
 const booking = require("./controllers/bookingController");
-router.get("/allScheduleSlots", booking.allScheduleSlots); 
-router.get("/availableScheduleSlots", booking.availableScheduleSlots); 
-router.get("/getScheduleSlotsByAdminId", booking.getScheduleSlotsByAdminId); 
-router.get("/userScheduleSlots", booking.userScheduleSlots); 
-router.get("/bookedScheduleSlots", booking.bookedScheduleSlots); 
-router.put("/bookScheduleSlot", booking.bookScheduleSlot); 
-router.put("/cancelScheduleSlot", booking.cancelScheduleSlot); 
-router.put("/updateScheduleSlotQuantity", booking.updateScheduleSlotQuantity); 
-router.delete("/deleteScheduleSlot", booking.deleteScheduleSlot); 
-router.post("/createScheduleSlot", booking.createScheduleSlot); 
+router.get("/allScheduleSlots",verifyToken, booking.allScheduleSlots); 
+router.get("/availableScheduleSlots",verifyToken, booking.availableScheduleSlots); 
+router.get("/getScheduleSlotsByAdminId",verifyToken, booking.getScheduleSlotsByAdminId); 
+router.get("/userScheduleSlots",verifyToken, booking.userScheduleSlots); 
+router.get("/bookedScheduleSlots",verifyToken, booking.bookedScheduleSlots); 
+router.put("/bookScheduleSlot",verifyToken, booking.bookScheduleSlot); 
+router.put("/cancelScheduleSlot",verifyToken, booking.cancelScheduleSlot); 
+router.put("/updateScheduleSlotQuantity",verifyToken, booking.updateScheduleSlotQuantity); 
+router.delete("/deleteScheduleSlot",verifyToken, booking.deleteScheduleSlot); 
+router.post("/createScheduleSlot",verifyToken, booking.createScheduleSlot); 
 
 app.use(router); 
 app.listen(port, () => {
