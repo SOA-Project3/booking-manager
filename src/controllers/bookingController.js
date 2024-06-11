@@ -24,6 +24,27 @@ const allScheduleSlots = (req, res) => {
     });
 };
 
+const getScheduleSlotsByAdminId = (req, res) => {
+    const { userId } = req.query;
+    // Ejecutar una consulta SELECT
+    new sql.Request().query(`SELECT ss.*
+                             FROM ScheduleSlots ss
+                             JOIN Branch b ON ss.Branch = b.Id
+                             JOIN UserData ud ON b.Admin = ud.Id
+                             WHERE ud.Id = '${userId}';`, (err, result) => {
+        if (err) {
+            console.error("Error executing query:", err);
+            return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({ error: "Error executing query" });
+        } else {
+            if (result.recordset.length === 0) {
+                return res.status(statusCodes.OK).json({ message: "No schedule slots found for the Branch" });
+            } else {
+                return res.status(statusCodes.OK).json({ message: result.recordset });
+            }
+        }
+    });
+};
+
 const availableScheduleSlots = (req, res) => {
     // Execute a SELECT query
     new sql.Request().query("SELECT * FROM ScheduleSlots WHERE IsBooked = 'No'", (err, result) => {
@@ -248,17 +269,17 @@ async function updateScheduleSlotQuantity(req, res) {
 };
 
 async function createScheduleSlot(req, res) {
-    const { datetime } = req.body;
+    const { datetime, branch } = req.body;
     const sqlDateTime = new Date(datetime).toISOString().slice(0, 19).replace('T', ' ');
 
     try {
         // Ejecutar la consulta de inserción
         const pool = await new sql.Request();
-        await pool.query(`INSERT INTO ScheduleSlots (DateTime, IsBooked) VALUES ('${sqlDateTime}', 'No')`);
+        await pool.query(`INSERT INTO ScheduleSlots (DateTime, IsBooked) VALUES ('${branch}', '${sqlDateTime}', 'No')`);
 
         // Enviar notificación por correo electrónico
         const subject = "Schedule Slot created";
-        const message = `Schedule Slot created successfully. Details: Time: ${sqlDateTime}`;
+        const message = `Schedule Slot created successfully. Details: Time: ${sqlDateTime}. Location ${branch}`;
         console.log(message);
         emailer.sendEmail(subject, message, "soagrupo6@gmail.com");
 
@@ -312,6 +333,7 @@ async function deleteScheduleSlot(req, res) {
 module.exports = {
     availableScheduleSlots,
     userScheduleSlots,
+    getScheduleSlotsByAdminId,
     allScheduleSlots,
     bookedScheduleSlots,
     bookScheduleSlot,
