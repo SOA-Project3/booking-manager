@@ -21,6 +21,8 @@ var config = {
   }
 };
 
+const algorithm = 'aes-256-cbc'; // Using AES encryption
+
 function decrypt(iv, encryptedText) {
   let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
   let decrypted = decipher.update(encryptedText);
