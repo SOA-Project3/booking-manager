@@ -275,7 +275,7 @@ async function createScheduleSlot(req, res) {
     try {
         // Ejecutar la consulta de inserción
         const pool = await new sql.Request();
-        await pool.query(`INSERT INTO ScheduleSlots (DateTime, IsBooked) VALUES ('${branch}', '${sqlDateTime}', 'No')`);
+        await pool.query(`INSERT INTO ScheduleSlots (Branch, DateTime, IsBooked) VALUES ('${branch}', '${sqlDateTime}', 'No')`);
 
         // Enviar notificación por correo electrónico
         const subject = "Schedule Slot created";
