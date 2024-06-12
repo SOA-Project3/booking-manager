@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking 
+  template:
+    metadata:
+      labels:
+        app: booking 
+    spec:
+      containers:
+        - name: booking 
+          image: booking:v0.1
+          ports:
+            - containerPort: 3004
+          env:
+            - name: TOKEN_KEY
+              value: 'b5395b0d94a52c08f7e10e9c517e51b6'
+
